@@ -3,9 +3,10 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
-import router from "./routes";
 import notFoundHandler from "./middlewares/notFoundHandler";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
+import { castALikeHandler, createPostHandler, getAllPosts } from "./service/post.service";
+import { createCommentHandler } from "./service/comment.service";
 
 const app = express();
 
@@ -21,13 +22,16 @@ app.use(cookieParser());
 app.get("/", (req: Request, res: Response) => {
     res.json({
         success: true,
-        message: "🚀 Chronova API is running",
+        message: "🚀 vines API is running",
         timestamp: new Date().toISOString(),
     });
 });
 
-// --------------- API Routes ---------------
-app.use("/", router);
+
+app.post('/posts', createPostHandler);
+app.post('/comments/:postId', createCommentHandler); 
+app.patch('/post/like/:postId', castALikeHandler);
+app.get('/posts', getAllPosts);
 
 
 // --------------- Error Handling ---------------
