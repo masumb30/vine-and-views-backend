@@ -8,6 +8,7 @@ import { Types } from 'mongoose';
 
 export const createPostHandler = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('running create post handler')
     // 1. Extract authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -17,8 +18,11 @@ export const createPostHandler = async (req: Request, res: Response): Promise<vo
 
     // 2. Extract the actual token string
     const token = authHeader.split(' ')[1];
+    console.log('token:', token);
 
     // 3. Query the session collection to get the userId
+    const all = await SessionModel.find();
+    console.log('all sessions:', all);
     const session = await SessionModel.findOne({ token });
     if (!session) {
       res.status(401).json({ message: 'Unauthorized: Invalid or expired session token' });
@@ -128,7 +132,7 @@ export const getAllPosts = async (req: Request, res: Response, next: NextFunctio
     const [totalPosts, posts] = await Promise.all([
       PostModel.countDocuments(query),
       PostModel.find(query)
-        .populate('authorId', 'name avatar') // Populates user relation layer with essential fields only
+        .populate('userId', 'name image') // Populates user relation layer with essential fields only
         .sort({ createdAt: -1 })             // Show newest botanical posts first
         .skip(skip)
         .limit(limit)
@@ -146,6 +150,49 @@ export const getAllPosts = async (req: Request, res: Response, next: NextFunctio
     });
   } catch (error) {
     // Pass errors down to your centralized Express error handling middleware
+    next(error);
+  }
+};
+
+export const getPostById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    // 1. Query post by ID and populate related documents
+    const post = await PostModel.findById(id)
+      // Populate author details (excluding sensitive data)
+      .populate('userId', 'name email image')
+      // Populate users who liked the post
+      .populate('likes', 'name image')
+      // Populate comments and deeply populate the author of each comment
+      .populate({
+        path: 'comments',
+        options: { sort: { createdAt: -1 } }, // Newest comments first
+        populate: {
+          path: 'userId',
+          select: 'name image',
+        },
+      })
+      .lean(); // Returns plain JS object for performance
+
+    // 2. Handle non-existent post ID
+    if (!post) {
+      res.status(404).json({
+        message: 'Post not found',
+      });
+      return;
+    }
+
+    // 3. Return full populated post details
+    res.status(200).json({
+      data: post,
+    });
+  } catch (error) {
+    // Pass errors down to centralized middleware
     next(error);
   }
 };

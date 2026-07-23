@@ -15,7 +15,7 @@ const SessionSchema = new Schema<ISessionDocument>(
     token: { type: String, required: true, unique: true },
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true }
   },
-  { timestamps: true }
+  { timestamps: true , collection: 'session'}
 );
 
 export const SessionModel = model<ISessionDocument>('Session', SessionSchema);
@@ -36,7 +36,7 @@ const UserSchema = new Schema<IUserDocument>(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true }
   },
-  { timestamps: true }
+  { timestamps: true, collection: 'user' }
 );
 
 export const UserModel = model<IUserDocument>('User', UserSchema);
