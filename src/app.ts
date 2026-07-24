@@ -30,7 +30,7 @@ app.get("/", (req: Request, res: Response) => {
 
 app.post('/posts', createPostHandler);
 app.post('/comments/:postId', createCommentHandler); 
-app.patch('/post/like/:postId', castALikeHandler);
+app.patch('/posts/like/:postId/:type', castALikeHandler);
 app.get('/posts', getAllPosts);
 app.get('/posts/:id', getPostById);
 app.delete('/comments/:id', deleteCommentHandler); 

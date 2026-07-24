@@ -57,7 +57,9 @@ export const createPostHandler = async (req: Request, res: Response): Promise<vo
 
 export const castALikeHandler = async (req: Request, res: Response): Promise<void> => {
   try {
+    const type = req.params.type; // 'like' or 'unlike'
     // 1. Extract and validate authorization header
+    console.log('hitting like with type: ', type)
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({ message: 'Unauthorized: Missing or malformed token' });
@@ -84,11 +86,20 @@ export const castALikeHandler = async (req: Request, res: Response): Promise<voi
 
     // 4. Update the post by adding the userId to the likes array if it's not already there
     // $addToSet treats the array like a Set, keeping likes unique per user
-    const updatedPost = await PostModel.findByIdAndUpdate(
+    let updatedPost;
+    if (type === 'like') {
+    updatedPost = await PostModel.findByIdAndUpdate(
       targetPostId,
       { $addToSet: { likes: session.userId } },
       { new: true } // Return the updated document instead of the old one
     );
+  } else if (type === 'unlike') {
+    updatedPost = await PostModel.findByIdAndUpdate(
+      targetPostId,
+      { $pull: { likes: session.userId } },
+      { new: true } // Return the updated document instead of the old one
+    );
+  }
 
     // 5. If no post matched the ID, return a 404
     if (!updatedPost) {
@@ -174,7 +185,7 @@ export const getPostById = async (
         options: { sort: { createdAt: -1 } }, // Newest comments first
         populate: {
           path: 'userId',
-          select: 'name image',
+          select: 'name image _id',
         },
       })
       .lean(); // Returns plain JS object for performance
