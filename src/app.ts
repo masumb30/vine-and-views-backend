@@ -5,7 +5,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import notFoundHandler from "./middlewares/notFoundHandler";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
-import { castALikeHandler, createPostHandler, getAllPosts, getDashboardDataHandler, getPostById } from "./service/post.service";
+import { castALikeHandler, createPostHandler, deletePostHandler, generateAIPostHandler, getAIAccountOverviewHandler, getAllPosts, getDashboardDataHandler, getPostById } from "./service/post.service";
 import { createCommentHandler, deleteCommentHandler } from "./service/comment.service";
 
 const app = express();
@@ -33,8 +33,11 @@ app.post('/comments/:postId', createCommentHandler);
 app.patch('/posts/like/:postId/:type', castALikeHandler);
 app.get('/posts', getAllPosts);
 app.get('/posts/:id', getPostById);
+app.delete('/posts/:id', deletePostHandler);
 app.delete('/comments/:id', deleteCommentHandler); 
 app.get('/dashboard', getDashboardDataHandler)
+app.post("/posts/generate-ai", generateAIPostHandler);
+app.get('/account-overview', getAIAccountOverviewHandler)
 
 
 // --------------- Error Handling ---------------

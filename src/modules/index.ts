@@ -51,7 +51,8 @@ export interface IPost {
   thumbnail: string;
   tags: string[];
   likes: Types.ObjectId[]; // Array of User IDs who liked the post
-  comments: Types.ObjectId[]
+  comments: Types.ObjectId[];
+  summary:string;
 }
 
 export interface IPostDocument extends IPost, Document {
@@ -67,7 +68,8 @@ const PostSchema = new Schema<IPostDocument>(
     thumbnail: { type: String, default: '' },
     tags: { type: [String], default: [] },
     likes: [{ type: Schema.Types.ObjectId, ref: 'User', default: [] }],
-    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment', default: [] }]
+    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment', default: [] }],
+    summary:{type:String,default:''}
   },
   { timestamps: true }
 );
