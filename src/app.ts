@@ -5,7 +5,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import notFoundHandler from "./middlewares/notFoundHandler";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
-import { castALikeHandler, createPostHandler, getAllPosts, getPostById } from "./service/post.service";
+import { castALikeHandler, createPostHandler, getAllPosts, getDashboardDataHandler, getPostById } from "./service/post.service";
 import { createCommentHandler, deleteCommentHandler } from "./service/comment.service";
 
 const app = express();
@@ -34,6 +34,7 @@ app.patch('/posts/like/:postId/:type', castALikeHandler);
 app.get('/posts', getAllPosts);
 app.get('/posts/:id', getPostById);
 app.delete('/comments/:id', deleteCommentHandler); 
+app.get('/dashboard', getDashboardDataHandler)
 
 
 // --------------- Error Handling ---------------

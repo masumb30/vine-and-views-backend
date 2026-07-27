@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { PostModel, SessionModel } from '../modules';
+import { CommentModel, PostModel, SessionModel, UserModel } from '../modules';
 import { Types } from 'mongoose';
 
 
@@ -205,5 +205,96 @@ export const getPostById = async (
   } catch (error) {
     // Pass errors down to centralized middleware
     next(error);
+  }
+};
+
+
+export const getDashboardDataHandler = async (req: Request, res: Response): Promise<void> => {
+  console.log('dashboard data has been hit')
+  try {
+    // 1. Extract authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ message: 'Unauthorized: Missing or malformed token' });
+      return;
+    }
+
+    // 2. Extract the actual token string
+    const token = authHeader.split(' ')[1];
+
+    // 3. Query the session collection to get the userId
+    const session = await SessionModel.findOne({ token });
+    if (!session) {
+      res.status(401).json({ message: 'Unauthorized: Invalid or expired session token' });
+      return;
+    }
+
+    const userId = session.userId;
+
+    // 4. Fetch User details
+    const user = await UserModel.findById(userId).select('-__v');
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    // 5. Fetch User's posts for metrics and recent posts list
+    const userPosts = await PostModel.find({ userId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // 6. Calculate aggregate metrics
+    const totalPosts = userPosts.length;
+    let totalLikesReceived = 0;
+    let totalCommentsReceived = 0;
+
+    userPosts.forEach((post) => {
+      totalLikesReceived += post.likes?.length || 0;
+      totalCommentsReceived += post.comments?.length || 0;
+    });
+
+    // Format recent posts (top 5) with calculated counts
+    const recentPosts = userPosts.slice(0, 5).map((post) => ({
+      _id: post._id,
+      title: post.title,
+      content: post.content,
+      thumbnail: post.thumbnail,
+      tags: post.tags,
+      likesCount: post.likes?.length || 0,
+      commentsCount: post.comments?.length || 0,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+    }));
+
+    // 7. Fetch recent comments made by the user
+    const recentActivity = await CommentModel.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('postId', 'title')
+      .select('postId content createdAt')
+      .lean();
+
+    // 8. Return formatted dashboard response
+    res.status(200).json({
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt,
+      },
+      metrics: {
+        totalPosts,
+        totalLikesReceived,
+        totalCommentsReceived,
+      },
+      recentPosts,
+      recentActivity,
+    });
+
+  } catch (error: any) {
+    res.status(500).json({
+      message: 'Internal server error while fetching dashboard data',
+      error: error.message,
+    });
   }
 };
