@@ -3,8 +3,8 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
-import notFoundHandler from "./middlewares/notFoundHandler";
-import globalErrorHandler from "./middlewares/globalErrorHandler";
+// import notFoundHandler from "./middlewares/notFoundHandler";
+// import globalErrorHandler from "./middlewares/globalErrorHandler";
 import { castALikeHandler, createPostHandler, deletePostHandler, generateAIPostHandler, getAIAccountOverviewHandler, getAllPosts, getDashboardDataHandler, getPostById } from "./service/post.service";
 import { createCommentHandler, deleteCommentHandler } from "./service/comment.service";
 
@@ -41,7 +41,7 @@ app.get('/account-overview', getAIAccountOverviewHandler)
 
 
 // --------------- Error Handling ---------------
-app.use(notFoundHandler);
-app.use(globalErrorHandler);
+// app.use(notFoundHandler);
+// app.use(globalErrorHandler);
 
 export default app;
